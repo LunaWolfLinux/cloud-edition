@@ -1,0 +1,14 @@
+#!/bin/sh
+# Applications you want to run with fluxbox.
+# MAKE SURE THAT APPS THAT KEEP RUNNING HAVE AN ''&'' AT THE END.
+
+## Who don't love an eye candy shadow?? Launch compton
+compton -b --config ~/.config/compton.conf &
+
+## Set wallpaper
+(sleep 3; fbsetbg -l) &
+
+## Tint2 panel, better than Fluxbox Toolbar
+tint2 -c ~/.fluxbox/tint2rc &
+
+exec fluxbox
