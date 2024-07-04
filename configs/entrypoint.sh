@@ -1,7 +1,9 @@
 #!/bin/bash
 
 # Adjust ownership of the mounted volume
-chown -R $USER_NAME:$USER_NAME /home/$USER_NAME
+if [ -z "$(ls -A /root)" ]; then
+    cp -r /tmproot/ /root/
+fi
 
 # Execute the main process
 exec "$@"

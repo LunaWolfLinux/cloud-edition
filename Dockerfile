@@ -34,18 +34,25 @@ RUN ln -s /usr/share/novnc/vnc_lite.html /usr/share/novnc/index.html
 
 # move new supervisord config
 ADD configs/supervisord.conf /etc/supervisord.conf
+
+# Create new User
+RUN mkdir -p /tmproot/.vnc && \
+    echo "$VNC_PASSWORD" | vncpasswd -f > /tmproot/.vnc/passwd && \
+    chmod 600 /tmproot/.vnc/passwd
 RUN echo "root ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 # Default Configs
-COPY configs/skel/ /root/
-RUN chmod +x /root/.fluxbox/startup
-RUN echo "$full $full|/root/.fluxbox/backgrounds/lunawolf.png||:1.0" > /root/.fluxbox/lastwallpaper
-RUN sed -i "s|command=/usr/bin/Xvnc :1 -geometry %(ENV_RESOLUTION) -depth 24 -rfbauth /root/.vnc/passwd|command=/usr/bin/Xvnc :1 -geometry $RESOLUTION -depth 24 -rfbauth /root/.vnc/passwd|g" /etc/supervisord.conf
-
-WORKDIR /root
+COPY configs/skel/ /tmproot/
+RUN chmod +x /tmproot/.fluxbox/startup
+RUN echo "$full $full|/root/.fluxbox/backgrounds/lunawolf.png||:1.0" > /tmproot/.fluxbox/lastwallpaper
+RUN sed -i "s|command=/usr/bin/Xvnc :1 -geometry %(ENV_RESOLUTION) -depth 24 -rfbauth /home/%(ENV_USER_NAME)/.vnc/passwd|command=/usr/bin/Xvnc :1 -geometry $RESOLUTION -depth 24 -rfbauth /root/.vnc/passwd|g" /etc/supervisord.conf
 
 # Required Ports
 EXPOSE 5901 6900
+# Copy the entrypoint script
+COPY configs/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
+# Set the entrypoint
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
