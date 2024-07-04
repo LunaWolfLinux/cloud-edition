@@ -1,4 +1,4 @@
-FROM alpine:latest
+FROM debian:latest
 
 ENV DISPLAY=:1
 ENV RESOLUTION=1024x768
@@ -10,13 +10,13 @@ ENV USER_PASSWORD="superSecurePass131"
 ENV IDEA_VERSION="2024.1.4"
 
 # Core Dependencies
-RUN apk update && apk upgrade && apk add --no-cache \
-  xorg-server tigervnc fluxbox supervisor xterm bash wqy-zenhei novnc websockify tint2 xset feh compton geany nano vim zsh \
-    firefox thunar shadow curl wget openjdk17-jre sudo sakura \
-    font-terminus font-inconsolata font-dejavu font-noto font-noto-cjk font-awesome font-noto-extra git
+RUN apt-get update && apt-get upgrade -y && apt-get install -y \
+  xorg tigervnc-standalone-server fluxbox supervisor xterm bash fonts-wqy-zenhei novnc websockify tint2 x11-xserver-utils feh compton geany nano vim zsh \
+  firefox-esr thunar sudo curl wget openjdk-17-jre sakura \
+  fonts-terminus fonts-inconsolata fonts-dejavu fonts-noto fonts-noto-cjk fonts-font-awesome fonts-noto-extra git
 
 # add a new user and set the same password for the new user and root
-RUN adduser -D $USER_NAME && \
+RUN adduser --disabled-password --gecos "" $USER_NAME && \
     echo "$USER_NAME:$USER_PASSWORD" | chpasswd && \
     echo "root:$USER_PASSWORD" | chpasswd
 
@@ -35,7 +35,6 @@ RUN mkdir -p /opt/intelliju && \
     rm /tmp/idea.tar.gz && \
     chown -R $USER_NAME:$USER_NAME /opt/intelliju
 RUN rm -rf /opt/intelliju/jbr
-
 
 # create symlink for noVNC config
 RUN ln -s /usr/share/novnc/vnc_lite.html /usr/share/novnc/index.html
@@ -63,7 +62,11 @@ RUN sed -i "s|command=/usr/bin/Xvnc :1 -geometry %(ENV_RESOLUTION) -depth 24 -rf
 USER $USER_NAME
 WORKDIR /home/$USER_NAME
 
+COPY configs/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
 # Required Ports
 EXPOSE 5901 6900
 
-ENTRYPOINT ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
